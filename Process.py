@@ -9,8 +9,8 @@ from matplotlib import pyplot as plt
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
-sourcefold = "/home/gboldi19/PycharmProjects/PrivacyEnchancer/gallery_src/"
-destfold = "/home/gboldi19/PycharmProjects/PrivacyEnchancer/gallery_dest/"
+sourcefold = "/home/gboldi19/Background_removal/gallery_src/"
+destfold = "/home/gboldi19/Background_removal/gallery_dest/"
 
 def LiveCAP():
     cap = cv2.VideoCapture(0)
