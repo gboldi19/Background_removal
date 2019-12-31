@@ -1,13 +1,16 @@
 import cv2
 import numpy as np
 import dlib
+import os
+import glob
+from PIL import Image
 from matplotlib import pyplot as plt
-
-imgsrc = cv2.imread("gallery_src/shuffle2.jpg")
-img = cv2.cvtColor(imgsrc, cv2.COLOR_BGR2RGB)
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+
+sourcefold = "/home/gboldi19/PycharmProjects/PrivacyEnchancer/gallery_src/"
+destfold = "/home/gboldi19/PycharmProjects/PrivacyEnchancer/gallery_dest/"
 
 def LiveCAP():
     cap = cv2.VideoCapture(0)
@@ -37,23 +40,69 @@ def LiveCAP():
     cv2.destroyAllWindows()
 
 def OnIMG():
-    grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = detector(grayscale)
-    for face in faces:
-        x1 = face.left()
-        y1 = face.top()
-        x2 = face.right()
-        y2 = face.bottom()
+    os.chdir("..")
+    images = []
+    glob_images = glob.glob(destfold+"*.png")
+    for actimg in glob_images:
+        print(os.getcwd())
+        '''
+        file, ext = os.path.splitext(actimg)
+        folder = os.path.basename(actimg)
+        print(folder, file, ext)
+        '''
+        images.append(actimg)
+    for image in images:
+        imgsrc = cv2.imread(image)
+        img = cv2.cvtColor(imgsrc, cv2.COLOR_BGR2RGB)
+        grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = detector(grayscale)
+        for face in faces:
+            x1 = face.left()
+            y1 = face.top()
+            x2 = face.right()
+            y2 = face.bottom()
+            landmarks = predictor(grayscale, face)
+            for n in range(0, 68):
+                x = landmarks.part(n).x
+                y = landmarks.part(n).y
+                cv2.circle(img, (x, y), 6, (0, 82, 255), -1)
+                #blurred = cv2.GaussianBlur(n, (50, 50), 30)
+        plt.imshow(img)
+        plt.savefig(image)
 
-        landmarks = predictor(grayscale, face)
-        for n in range(0, 68):
-            x = landmarks.part(n).x
-            y = landmarks.part(n).y
-            cv2.circle(img, (x, y), 6, (0, 82, 255), -1)
-            #blurred = cv2.GaussianBlur(n, (50, 50), 30)
+if not os.path.exists(destfold):
+    os.makedirs(destfold)
 
-    plt.imshow(img)
-    plt.show()
+os.chdir(sourcefold)
+#Bing API segítségével fetchelt kepek nagy elofordulasban .jpg kiterjesztessel rendelkeznek
+for infile in glob.glob("*.jpg"):
+    bonefile = os.path.basename(infile)
+    file, ext = os.path.splitext(bonefile)
+    print(os.getcwd(), file)
+    im = Image.open(bonefile)
+    rgb_im = im.convert('RGB')
+    rgb_im.save(destfold + file + ".png", "PNG")
+for infile in glob.glob("*.jpeg"):
+    bonefile = os.path.basename(infile)
+    file, ext = os.path.splitext(bonefile)
+    print(os.getcwd(), file)
+    im = Image.open(bonefile)
+    rgb_im = im.convert('RGB')
+    rgb_im.save(destfold + file + ".png", "PNG")
+for infile in glob.glob("*.JPG"):
+    bonefile = os.path.basename(infile)
+    file, ext = os.path.splitext(bonefile)
+    print(os.getcwd(), file)
+    im = Image.open(bonefile)
+    rgb_im = im.convert('RGB')
+    rgb_im.save(destfold + file + ".png", "PNG")
+for infile in glob.glob("*.JPEG"):
+    bonefile = os.path.basename(infile)
+    file, ext = os.path.splitext(bonefile)
+    print(os.getcwd(), file)
+    im = Image.open(bonefile)
+    rgb_im = im.convert('RGB')
+    rgb_im.save(destfold + file + ".png", "PNG")
 
 print("Nyomjon írjon 1-et, ha liveban szeretne detektalni!\nNyomjon 2-t, ha a képen!\nKerem valasszon: ")
 response = input()
