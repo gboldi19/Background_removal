@@ -8,9 +8,18 @@ from matplotlib import pyplot as plt
 
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 
 sourcefold = "/home/gboldi19/Background_removal/gallery_src/"
 destfold = "/home/gboldi19/Background_removal/gallery_dest/"
+
+def face_blur(bw, color):
+    faces = cascade.detectMultiScale(bw, 1.1, 4)
+    for (x, y, w, h) in faces:
+        roi_color = color[y:y + h, x:x + w]
+        blur = cv2.GaussianBlur(roi_color, (101, 101), 0)
+        color[y:y + h, x:x + w] = blur
+    return color
 
 def LiveCAP():
     cap = cv2.VideoCapture(0)
@@ -44,7 +53,8 @@ def OnIMG():
     images = []
     glob_images = glob.glob(destfold+"*.png")
     for actimg in glob_images:
-        print(os.getcwd())
+        #print(os.getcwd())
+        #print(len(actimg))
         '''
         file, ext = os.path.splitext(actimg)
         folder = os.path.basename(actimg)
@@ -68,47 +78,88 @@ def OnIMG():
                 cv2.circle(img, (x, y), 6, (0, 82, 255), -1)
                 #blurred = cv2.GaussianBlur(n, (50, 50), 30)
         plt.imshow(img)
+        plt.axis("off")
         plt.savefig(image)
+    print("A talált arcok: ", len(faces), "/", len(images), "képen.")
+    cv2.destroyAllWindows()
+
+def conversion():
+    #Bing API segítségével fetchelt kepek nagy elofordulasban .jpg kiterjesztessel rendelkeznek
+    for infile in glob.glob("*.jpg"):
+        bonefile = os.path.basename(infile)
+        file, ext = os.path.splitext(bonefile)
+        print(os.getcwd(), file)
+        im = Image.open(bonefile)
+        rgb_im = im.convert('RGB')
+        rgb_im.save(destfold + file + ".png", "PNG")
+    for infile in glob.glob("*.jpeg"):
+        bonefile = os.path.basename(infile)
+        file, ext = os.path.splitext(bonefile)
+        print(os.getcwd(), file)
+        im = Image.open(bonefile)
+        rgb_im = im.convert('RGB')
+        rgb_im.save(destfold + file + ".png", "PNG")
+    for infile in glob.glob("*.JPG"):
+        bonefile = os.path.basename(infile)
+        file, ext = os.path.splitext(bonefile)
+        print(os.getcwd(), file)
+        im = Image.open(bonefile)
+        rgb_im = im.convert('RGB')
+        rgb_im.save(destfold + file + ".png", "PNG")
+    for infile in glob.glob("*.JPEG"):
+        bonefile = os.path.basename(infile)
+        file, ext = os.path.splitext(bonefile)
+        print(os.getcwd(), file)
+        im = Image.open(bonefile)
+        rgb_im = im.convert('RGB')
+        rgb_im.save(destfold + file + ".png", "PNG")
+
 
 if not os.path.exists(destfold):
     os.makedirs(destfold)
 
 os.chdir(sourcefold)
-#Bing API segítségével fetchelt kepek nagy elofordulasban .jpg kiterjesztessel rendelkeznek
-for infile in glob.glob("*.jpg"):
-    bonefile = os.path.basename(infile)
-    file, ext = os.path.splitext(bonefile)
-    print(os.getcwd(), file)
-    im = Image.open(bonefile)
-    rgb_im = im.convert('RGB')
-    rgb_im.save(destfold + file + ".png", "PNG")
-for infile in glob.glob("*.jpeg"):
-    bonefile = os.path.basename(infile)
-    file, ext = os.path.splitext(bonefile)
-    print(os.getcwd(), file)
-    im = Image.open(bonefile)
-    rgb_im = im.convert('RGB')
-    rgb_im.save(destfold + file + ".png", "PNG")
-for infile in glob.glob("*.JPG"):
-    bonefile = os.path.basename(infile)
-    file, ext = os.path.splitext(bonefile)
-    print(os.getcwd(), file)
-    im = Image.open(bonefile)
-    rgb_im = im.convert('RGB')
-    rgb_im.save(destfold + file + ".png", "PNG")
-for infile in glob.glob("*.JPEG"):
-    bonefile = os.path.basename(infile)
-    file, ext = os.path.splitext(bonefile)
-    print(os.getcwd(), file)
-    im = Image.open(bonefile)
-    rgb_im = im.convert('RGB')
-    rgb_im.save(destfold + file + ".png", "PNG")
-
-print("Nyomjon írjon 1-et, ha liveban szeretne detektalni!\nNyomjon 2-t, ha a képen!\nKerem valasszon: ")
+print("-----Arc detektalo es homalyosito program-----")
+print("--------------------Menu:---------------------")
+print("1-es gomb: -> Arcelek detektalasa\n2-es gomb: -> Kepen valo bejaras\n3-as gomb: -> Arc torzitasa\n4-es gomb: -> Kepeken talalhato arcok torzitasa")
+#elso futtataskor ajanlott hasznalni
+#conversion()
 response = input()
 if response == '1':
+
     LiveCAP()
+
 elif response == '2':
+
     OnIMG()
+
+elif response == '3':
+
+    video_cap = cv2.VideoCapture(0)
+    while True:
+        _, color = video_cap.read()
+        bw = cv2.cvtColor(color, cv2.COLOR_BGR2GRAY)
+        blur = face_blur(bw, color)
+        cv2.imshow('Video', blur)
+        if cv2.waitKey(1) & 0xFF == ord('x'):
+            break
+
+    video_cap.release()
+    cv2.destroyAllWindows()
+
+elif response == '4':
+
+    os.chdir("..")
+    images = []
+    glob_images = glob.glob(destfold+"*.png")
+    for actimg in glob_images:
+        images.append(actimg)
+    for image in images:
+        imgsrc = cv2.imread(image)
+        bw = cv2.cvtColor(imgsrc, cv2.COLOR_BGR2GRAY)
+        blur = face_blur(bw, imgsrc)
+        plt.imshow(blur)
+        plt.axis("off")
+        plt.savefig(image)
 else:
     print("Rossz input!")
