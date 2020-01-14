@@ -13,6 +13,8 @@ cascade = cv2.CascadeClassifier("haarcascade_frontalface_default.xml")
 sourcefold = "/home/gboldi19/Background_removal/gallery_src/"
 destfold = "/home/gboldi19/Background_removal/gallery_dest/"
 
+want_conversion = True
+
 def face_blur(bw, color):
     faces = cascade.detectMultiScale(bw, 1.1, 4)
     for (x, y, w, h) in faces:
@@ -51,6 +53,9 @@ def LiveCAP():
 def OnIMG():
     os.chdir("..")
     images = []
+    on_count = 0
+    face_count = 0
+    face2_count = 0
     glob_images = glob.glob(destfold+"*.png")
     for actimg in glob_images:
         #print(os.getcwd())
@@ -66,6 +71,7 @@ def OnIMG():
         img = cv2.cvtColor(imgsrc, cv2.COLOR_BGR2RGB)
         grayscale = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = detector(grayscale)
+        face2_count = face2_count + 1
         for face in faces:
             x1 = face.left()
             y1 = face.top()
@@ -77,21 +83,33 @@ def OnIMG():
                 y = landmarks.part(n).y
                 cv2.circle(img, (x, y), 6, (0, 82, 255), -1)
                 #blurred = cv2.GaussianBlur(n, (50, 50), 30)
+            face_count=face_count+1
+            print("Face_count: ", face_count)
+        if (face_count != face2_count):
+            on_count = on_count + 2
+            print("On_count: ", on_count, "Face2_count", face2_count)
         plt.imshow(img)
         plt.axis("off")
         plt.savefig(image)
-    print("A talált arcok: ", len(faces), "/", len(images), "képen.")
+        face2_count = face_count
+        print("Face2_count", face2_count)
+    print(on_count, "képen talált arcot a(z)", len(images), "képből. Összesen", face_count, "arcot talált!")
+    eloford = (float(on_count) / float(len(images))) * 100
+    print("Ez", float("{0:.2f}".format(eloford)), "%-os sikeresseget mutat!")
     cv2.destroyAllWindows()
 
 def conversion():
     #Bing API segítségével fetchelt kepek nagy elofordulasban .jpg kiterjesztessel rendelkeznek
+    print("A konverzió megkezdődött!")
+    file_count = 0
     for infile in glob.glob("*.jpg"):
+        file_count = file_count + 1
         bonefile = os.path.basename(infile)
         file, ext = os.path.splitext(bonefile)
         print(os.getcwd(), file)
         im = Image.open(bonefile)
         rgb_im = im.convert('RGB')
-        rgb_im.save(destfold + file + ".png", "PNG")
+        rgb_im.save(destfold + str(file_count) + ".png", "PNG")
     for infile in glob.glob("*.jpeg"):
         bonefile = os.path.basename(infile)
         file, ext = os.path.splitext(bonefile)
@@ -113,17 +131,18 @@ def conversion():
         im = Image.open(bonefile)
         rgb_im = im.convert('RGB')
         rgb_im.save(destfold + file + ".png", "PNG")
-
+    print("A konverzió végzett!")
 
 if not os.path.exists(destfold):
     os.makedirs(destfold)
 
 os.chdir(sourcefold)
+#elso futtataskor ajanlott hasznalni
+if want_conversion:
+    conversion()
 print("-----Arc detektalo es homalyosito program-----")
 print("--------------------Menu:---------------------")
 print("1-es gomb: -> Arcelek detektalasa\n2-es gomb: -> Kepen valo bejaras\n3-as gomb: -> Arc torzitasa\n4-es gomb: -> Kepeken talalhato arcok torzitasa")
-#elso futtataskor ajanlott hasznalni
-#conversion()
 response = input()
 if response == '1':
 
